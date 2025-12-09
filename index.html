@@ -1,0 +1,2843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Belagavi Police Attendance System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --police-red: #8B0000;
+            --police-red-light: #B22222;
+            --police-red-dark: #660000;
+            --police-blue: #00008B;
+            --police-gray: #2C2C2C;
+            --police-light: #F5F5F5;
+            --police-gold: #FFD700;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), 
+                        url('https://images.unsplash.com/photo-1551524165-6b6e5a6166f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+        }
+        
+        .login-box {
+            background: rgba(44, 44, 44, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(139, 0, 0, 0.3);
+            border: 2px solid var(--police-red);
+            width: 400px;
+            text-align: center;
+        }
+        
+        .logo {
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            color: var(--police-red);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .logo h2 {
+            color: var(--police-gold);
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .login-input {
+            width: 100%;
+            padding: 15px;
+            margin: 15px 0;
+            border: 2px solid var(--police-red);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 16px;
+        }
+        
+        .login-input:focus {
+            outline: none;
+            border-color: var(--police-gold);
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, var(--police-red), var(--police-red-light));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .login-btn:hover {
+            background: linear-gradient(45deg, var(--police-red-dark), var(--police-red));
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 0, 0, 0.4);
+        }
+        
+        .role-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .role-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(139, 0, 0, 0.3);
+            border: 2px solid var(--police-red);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .role-btn.active {
+            background: var(--police-red);
+            font-weight: bold;
+        }
+        
+        .system-container {
+            display: none;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, var(--police-gray), var(--police-red-dark));
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--police-gold);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .header-logo img {
+            height: 60px;
+            width: auto;
+        }
+        
+        .header-logo h1 {
+            color: var(--police-gold);
+            font-size: 1.8rem;
+        }
+        
+        .header-logo span {
+            color: white;
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .logout-btn {
+            background: var(--police-red);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: var(--police-red-light);
+            transform: translateY(-2px);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: calc(100vh - 100px);
+        }
+        
+        .sidebar {
+            background: var(--police-gray);
+            padding: 20px;
+            border-right: 2px solid var(--police-red);
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+        
+        .sidebar-menu a {
+            display: block;
+            padding: 15px;
+            background: rgba(139, 0, 0, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            border-left: 4px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: rgba(139, 0, 0, 0.5);
+            border-left: 4px solid var(--police-gold);
+            transform: translateX(5px);
+        }
+        
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+        }
+        
+        .main-content {
+            padding: 30px;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .page-title {
+            color: var(--police-gold);
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--police-red);
+        }
+        
+        .form-container {
+            background: rgba(44, 44, 44, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid var(--police-red);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            display: block;
+            color: var(--police-gold);
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .form-input, .form-select {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid var(--police-red);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--police-gold);
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .location-section {
+            grid-column: 1 / -1;
+            background: rgba(139, 0, 0, 0.2);
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px dashed var(--police-red);
+        }
+        
+        .location-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .location-btn {
+            background: linear-gradient(45deg, var(--police-red), var(--police-red-light));
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .location-btn:hover {
+            background: linear-gradient(45deg, var(--police-red-dark), var(--police-red));
+            transform: translateY(-2px);
+        }
+        
+        .map-container {
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+            border: 2px solid var(--police-red);
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .submit-btn {
+            grid-column: 1 / -1;
+            background: linear-gradient(45deg, #006400, #008000);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .submit-btn:hover {
+            background: linear-gradient(45deg, #004d00, #006400);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 100, 0, 0.4);
+        }
+        
+        .submit-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status-message {
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .success {
+            background: rgba(0, 128, 0, 0.2);
+            border: 2px solid green;
+            color: #90EE90;
+        }
+        
+        .error {
+            background: rgba(139, 0, 0, 0.2);
+            border: 2px solid var(--police-red);
+            color: #FFB6C1;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--police-gold);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .data-table {
+            width: 100%;
+            background: rgba(44, 44, 44, 0.8);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid var(--police-red);
+        }
+        
+        .data-table th {
+            background: var(--police-red);
+            padding: 15px;
+            text-align: left;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(139, 0, 0, 0.3);
+        }
+        
+        .data-table tr:hover {
+            background: rgba(139, 0, 0, 0.1);
+        }
+        
+        .filter-section {
+            background: rgba(44, 44, 44, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid var(--police-red);
+            margin-bottom: 30px;
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .filter-btn {
+            background: linear-gradient(45deg, var(--police-blue), #0000CD);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn:hover {
+            background: linear-gradient(45deg, #0000CD, var(--police-blue));
+            transform: translateY(-2px);
+        }
+        
+        .export-btn {
+            background: linear-gradient(45deg, #006400, #008000);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .export-btn:hover {
+            background: linear-gradient(45deg, #004d00, #006400);
+            transform: translateY(-2px);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(44, 44, 44, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid var(--police-red);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            color: var(--police-gold);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #ccc;
+            font-size: 1.1rem;
+        }
+        
+        .chart-container {
+            background: rgba(44, 44, 44, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid var(--police-red);
+            margin-bottom: 30px;
+            height: 400px;
+        }
+        
+        .admin-map-container {
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid var(--police-red);
+            margin-bottom: 30px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: var(--police-gray);
+            padding: 40px;
+            border-radius: 15px;
+            border: 3px solid var(--police-gold);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .modal-icon {
+            font-size: 5rem;
+            color: var(--police-gold);
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            color: var(--police-gold);
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        
+        .modal-message {
+            color: white;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+        
+        .modal-btn {
+            background: var(--police-red);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .modal-btn:hover {
+            background: var(--police-red-light);
+            transform: translateY(-2px);
+        }
+        
+        .logo-upload {
+            background: rgba(139, 0, 0, 0.2);
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px dashed var(--police-red);
+            text-align: center;
+        }
+        
+        .logo-preview {
+            margin: 20px auto;
+            width: 200px;
+            height: 200px;
+            border: 2px solid var(--police-red);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .logo-preview img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .google-sheet-info {
+            background: rgba(0, 100, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #00FF00;
+        }
+        
+        .sheet-link {
+            color: #90EE90;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .sheet-link:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .location-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .login-box {
+                width: 90%;
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-box">
+            <div class="logo">
+                <h1><i class="fas fa-shield-alt"></i> BPAS</h1>
+                <h2>Belagavi Police Attendance System</h2>
+                <p style="color: #ccc; margin-top: 10px;">Data stored in Google Sheet</p>
+            </div>
+            
+            <div class="role-selector">
+                <button class="role-btn active" onclick="selectRole('user')">
+                    <i class="fas fa-user"></i> Police Personnel
+                </button>
+                <button class="role-btn" onclick="selectRole('admin')">
+                    <i class="fas fa-user-shield"></i> Admin
+                </button>
+            </div>
+            
+            <div id="userLogin" class="login-form">
+                <h3 style="color: var(--police-gold); margin-bottom: 20px;">Police Personnel Login</h3>
+                <input type="text" class="login-input" id="userID" placeholder="Enter your ID">
+                <button class="login-btn" onclick="loginUser()">
+                    <i class="fas fa-sign-in-alt"></i> Mark Attendance
+                </button>
+                <p style="margin-top: 20px; color: #ccc; font-size: 0.9rem;">
+                    <i class="fas fa-info-circle"></i> Enter your ID to mark attendance
+                </p>
+            </div>
+            
+            <div id="adminLogin" class="login-form" style="display: none;">
+                <h3 style="color: var(--police-gold); margin-bottom: 20px;">Admin Login</h3>
+                <input type="text" class="login-input" id="adminUsername" placeholder="Username">
+                <input type="password" class="login-input" id="adminPassword" placeholder="Password">
+                <button class="login-btn" onclick="loginAdmin()">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </div>
+            
+            <div class="google-sheet-info" style="margin-top: 20px;">
+                <p><i class="fas fa-google"></i> Data stored in: 
+                <a href="https://docs.google.com/spreadsheets/d/1MA0MWmlTuWmDzsOsw7v0owf9hNlfCdfjlFoT4ZzbOJI/edit" 
+                   target="_blank" class="sheet-link">Google Sheet</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Dashboard -->
+    <div id="userDashboard" class="system-container">
+        <div class="header">
+            <div class="header-logo">
+                <div id="userLogoPreview" class="logo-preview" style="width: 60px; height: 60px; margin: 0;">
+                    <i class="fas fa-shield-alt" style="font-size: 2rem; color: var(--police-gold);"></i>
+                </div>
+                <div>
+                    <h1>Police Attendance System</h1>
+                    <span id="currentDateTime"></span>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+        
+        <div class="main-content">
+            <h2 class="page-title">Mark Your Attendance</h2>
+            
+            <div class="google-sheet-info">
+                <p><i class="fas fa-database"></i> Attendance data is saved directly to Google Sheets</p>
+                <p><i class="fas fa-clock"></i> You can mark attendance only once per hour</p>
+            </div>
+            
+            <div class="form-container">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-id-card"></i> Police ID *</label>
+                        <input type="text" class="form-input" id="policeId" placeholder="Enter your Police ID">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-user-tag"></i> Rank *</label>
+                        <select class="form-select" id="rank">
+                            <option value="">Select Rank</option>
+                            <option value="HG">Home Guard (HG)</option>
+                            <option value="PC">Police Constable (PC)</option>
+                            <option value="HC">Head Constable (HC)</option>
+                            <option value="ASI">Assistant Sub-Inspector (ASI)</option>
+                            <option value="PSI">Police Sub-Inspector (PSI)</option>
+                            <option value="PI/CPI">Police Inspector/Chief PI (PI/CPI)</option>
+                            <option value="ACP/DSP">Assistant Commissioner/Deputy SP (ACP/DSP)</option>
+                            <option value="SP/DCP">Superintendent/Deputy CP (SP/DCP)</option>
+                            <option value="CP">Commissioner of Police (CP)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-user"></i> Full Name *</label>
+                        <input type="text" class="form-input" id="fullName" placeholder="Enter your full name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-building"></i> Police Station *</label>
+                        <select class="form-select" id="policeStation">
+                            <option value="">Select Police Station</option>
+                            <option value="APMC Police Station">APMC Police Station</option>
+                            <option value="Malamaruti Police Station">Malamaruti Police Station</option>
+                            <option value="Market Police Station">Market Police Station</option>
+                            <option value="Shahapur Police Station">Shahapur Police Station</option>
+                            <option value="Kadebazar Police Station">Kadebazar Police Station</option>
+                            <option value="Camp Police Station">Camp Police Station</option>
+                            <option value="Tilakawadi Police Station">Tilakawadi Police Station</option>
+                            <option value="Udyambag Police Station">Udyambag Police Station</option>
+                            <option value="Rural Police Station">Rural Police Station</option>
+                            <option value="Kakati Police Station">Kakati Police Station</option>
+                            <option value="Marihal Police Station">Marihal Police Station</option>
+                            <option value="Bagewadi Police Station">Bagewadi Police Station</option>
+                            <option value="Traffic North Police Station">Traffic North Police Station</option>
+                            <option value="Traffic South Police Station">Traffic South Police Station</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-map-marker-alt"></i> Sector *</label>
+                        <select class="form-select" id="sector">
+                            <option value="">Select Sector</option>
+                            <option value="1">Sector 1</option>
+                            <option value="2">Sector 2</option>
+                            <option value="3">Sector 3</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-clock"></i> Shift *</label>
+                        <select class="form-select" id="shift">
+                            <option value="">Select Shift</option>
+                            <option value="A">Shift A (6:00 AM - 2:00 PM)</option>
+                            <option value="B">Shift B (2:00 PM - 10:00 PM)</option>
+                            <option value="C">Shift C (10:00 PM - 6:00 AM)</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    
+                    <div class="location-section">
+                        <label class="form-label"><i class="fas fa-map-pin"></i> Location Capture</label>
+                        <p style="color: #ccc; margin-bottom: 20px;">Click below to capture your current location. A beep sound will confirm capture.</p>
+                        
+                        <button class="location-btn" id="captureLocationBtn" onclick="captureLocation()">
+                            <i class="fas fa-crosshairs"></i> Capture Current Location
+                        </button>
+                        
+                        <div class="location-info" id="locationInfo" style="display: none;">
+                            <div>
+                                <label class="form-label">Latitude</label>
+                                <input type="text" class="form-input" id="latitude" readonly>
+                            </div>
+                            <div>
+                                <label class="form-label">Longitude</label>
+                                <input type="text" class="form-input" id="longitude" readonly>
+                            </div>
+                            <div>
+                                <label class="form-label">Accuracy</label>
+                                <input type="text" class="form-input" id="accuracy" readonly>
+                            </div>
+                            <div>
+                                <label class="form-label">Address</label>
+                                <input type="text" class="form-input" id="address" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="map-container" id="mapContainer" style="display: none;">
+                            <div id="map"></div>
+                        </div>
+                    </div>
+                    
+                    <button class="submit-btn" id="submitAttendanceBtn" onclick="submitAttendance()" disabled>
+                        <i class="fas fa-check-circle"></i> Submit Attendance to Google Sheet
+                    </button>
+                </div>
+                
+                <div id="attendanceStatus" class="status-message"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="system-container">
+        <div class="header">
+            <div class="header-logo">
+                <i class="fas fa-shield-alt" style="font-size: 2.5rem; color: var(--police-gold);"></i>
+                <div>
+                    <h1>BPAS Admin Dashboard</h1>
+                    <span>Belagavi Police Attendance System</span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <a href="https://docs.google.com/spreadsheets/d/1MA0MWmlTuWmDzsOsw7v0owf9hNlfCdfjlFoT4ZzbOJI/edit" 
+                   target="_blank" class="logout-btn" style="background: var(--police-blue);">
+                    <i class="fas fa-external-link-alt"></i> View Google Sheet
+                </a>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="sidebar">
+                <ul class="sidebar-menu">
+                    <li><a href="#" class="active" onclick="showTab('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="#" onclick="showTab('attendanceData')"><i class="fas fa-database"></i> Attendance Data</a></li>
+                    <li><a href="#" onclick="showTab('addPersonnel')"><i class="fas fa-user-plus"></i> Add Personnel</a></li>
+                    <li><a href="#" onclick="showTab('trackerMap')"><i class="fas fa-map"></i> Tracker Map</a></li>
+                    <li><a href="#" onclick="showTab('analytics')"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                    <li><a href="#" onclick="showTab('syncData')"><i class="fas fa-sync-alt"></i> Sync Data</a></li>
+                </ul>
+            </div>
+            
+            <div class="main-content">
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content active">
+                    <h2 class="page-title">Admin Dashboard</h2>
+                    
+                    <div class="google-sheet-info">
+                        <p><i class="fas fa-info-circle"></i> All data is synchronized with Google Sheets in real-time</p>
+                        <p><i class="fas fa-link"></i> Google Sheet: 
+                            <a href="https://docs.google.com/spreadsheets/d/1MA0MWmlTuWmDzsOsw7v0owf9hNlfCdfjlFoT4ZzbOJI/edit" 
+                               target="_blank" class="sheet-link">Open Sheet</a>
+                        </p>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalAttendance">0</div>
+                            <div class="stat-label">Total Attendance</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalPersonnel">0</div>
+                            <div class="stat-label">Registered Personnel</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="presentToday">0</div>
+                            <div class="stat-label">Present Today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="activeStations">0</div>
+                            <div class="stat-label">Active Stations</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 style="color: var(--police-gold); margin-bottom: 20px;">Attendance Trend (Last 7 Days)</h3>
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                    
+                    <div class="admin-map-container">
+                        <div id="adminMap"></div>
+                    </div>
+                </div>
+                
+                <!-- Attendance Data Tab -->
+                <div id="attendanceData" class="tab-content">
+                    <h2 class="page-title">Attendance Records</h2>
+                    
+                    <div class="filter-section">
+                        <h3 style="color: var(--police-gold); margin-bottom: 20px;">Filter Records</h3>
+                        <div class="filter-grid">
+                            <div>
+                                <label class="form-label">Date Range</label>
+                                <input type="date" class="form-input" id="filterDateFrom">
+                                <input type="date" class="form-input" id="filterDateTo" style="margin-top: 10px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Police Station</label>
+                                <select class="form-select" id="filterStation">
+                                    <option value="">All Stations</option>
+                                    <option value="APMC Police Station">APMC Police Station</option>
+                                    <option value="Malamaruti Police Station">Malamaruti Police Station</option>
+                                    <option value="Market Police Station">Market Police Station</option>
+                                    <option value="Shahapur Police Station">Shahapur Police Station</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Sector</label>
+                                <select class="form-select" id="filterSector">
+                                    <option value="">All Sectors</option>
+                                    <option value="1">Sector 1</option>
+                                    <option value="2">Sector 2</option>
+                                    <option value="3">Sector 3</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Shift</label>
+                                <select class="form-select" id="filterShift">
+                                    <option value="">All Shifts</option>
+                                    <option value="A">Shift A</option>
+                                    <option value="B">Shift B</option>
+                                    <option value="C">Shift C</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Rank</label>
+                                <select class="form-select" id="filterRank">
+                                    <option value="">All Ranks</option>
+                                    <option value="HG">Home Guard (HG)</option>
+                                    <option value="PC">Police Constable (PC)</option>
+                                    <option value="HC">Head Constable (HC)</option>
+                                    <option value="ASI">Assistant Sub-Inspector (ASI)</option>
+                                    <option value="PSI">Police Sub-Inspector (PSI)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 15px; margin-top: 25px;">
+                            <button class="filter-btn" onclick="filterRecords()">
+                                <i class="fas fa-filter"></i> Apply Filters
+                            </button>
+                            <button class="export-btn" onclick="exportToGoogleSheets()">
+                                <i class="fas fa-file-export"></i> Export Filtered Data
+                            </button>
+                            <button class="export-btn" onclick="refreshData()">
+                                <i class="fas fa-sync-alt"></i> Refresh from Sheet
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" id="attendanceTable">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Police ID</th>
+                                    <th>Name</th>
+                                    <th>Rank</th>
+                                    <th>Station</th>
+                                    <th>Sector</th>
+                                    <th>Shift</th>
+                                    <th>Location</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceTableBody">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Add Personnel Tab -->
+                <div id="addPersonnel" class="tab-content">
+                    <h2 class="page-title">Add New Police Personnel</h2>
+                    
+                    <div class="form-container">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label"><i class="fas fa-id-card"></i> Police ID *</label>
+                                <input type="text" class="form-input" id="newPoliceId" placeholder="Enter unique Police ID">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label"><i class="fas fa-user-tag"></i> Rank *</label>
+                                <select class="form-select" id="newRank">
+                                    <option value="">Select Rank</option>
+                                    <option value="HG">Home Guard (HG)</option>
+                                    <option value="PC">Police Constable (PC)</option>
+                                    <option value="HC">Head Constable (HC)</option>
+                                    <option value="ASI">Assistant Sub-Inspector (ASI)</option>
+                                    <option value="PSI">Police Sub-Inspector (PSI)</option>
+                                    <option value="PI/CPI">Police Inspector/Chief PI (PI/CPI)</option>
+                                    <option value="ACP/DSP">Assistant Commissioner/Deputy SP (ACP/DSP)</option>
+                                    <option value="SP/DCP">Superintendent/Deputy CP (SP/DCP)</option>
+                                    <option value="CP">Commissioner of Police (CP)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label"><i class="fas fa-user"></i> Full Name *</label>
+                                <input type="text" class="form-input" id="newFullName" placeholder="Enter full name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label"><i class="fas fa-building"></i> Police Station *</label>
+                                <select class="form-select" id="newPoliceStation">
+                                    <option value="">Select Police Station</option>
+                                    <option value="APMC Police Station">APMC Police Station</option>
+                                    <option value="Malamaruti Police Station">Malamaruti Police Station</option>
+                                    <option value="Market Police Station">Market Police Station</option>
+                                    <option value="Shahapur Police Station">Shahapur Police Station</option>
+                                    <option value="Kadebazar Police Station">Kadebazar Police Station</option>
+                                    <option value="Camp Police Station">Camp Police Station</option>
+                                    <option value="Tilakawadi Police Station">Tilakawadi Police Station</option>
+                                    <option value="Udyambag Police Station">Udyambag Police Station</option>
+                                    <option value="Rural Police Station">Rural Police Station</option>
+                                    <option value="Kakati Police Station">Kakati Police Station</option>
+                                    <option value="Marihal Police Station">Marihal Police Station</option>
+                                    <option value="Bagewadi Police Station">Bagewadi Police Station</option>
+                                    <option value="Traffic North Police Station">Traffic North Police Station</option>
+                                    <option value="Traffic South Police Station">Traffic South Police Station</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label"><i class="fas fa-map-marker-alt"></i> Sector *</label>
+                                <select class="form-select" id="newSector">
+                                    <option value="">Select Sector</option>
+                                    <option value="1">Sector 1</option>
+                                    <option value="2">Sector 2</option>
+                                    <option value="3">Sector 3</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label"><i class="fas fa-clock"></i> Default Shift *</label>
+                                <select class="form-select" id="newShift">
+                                    <option value="">Select Shift</option>
+                                    <option value="A">Shift A</option>
+                                    <option value="B">Shift B</option>
+                                    <option value="C">Shift C</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
+                                <input type="email" class="form-input" id="newEmail" placeholder="Enter email address">
+                            </div>
+                            
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label class="form-label"><i class="fas fa-phone"></i> Contact Number</label>
+                                <input type="tel" class="form-input" id="newContact" placeholder="Enter contact number">
+                            </div>
+                            
+                            <button class="submit-btn" onclick="addNewPersonnel()">
+                                <i class="fas fa-user-plus"></i> Add Personnel to Google Sheet
+                            </button>
+                        </div>
+                        
+                        <div id="personnelStatus" class="status-message"></div>
+                    </div>
+                </div>
+                
+                <!-- Tracker Map Tab -->
+                <div id="trackerMap" class="tab-content">
+                    <h2 class="page-title">Live Attendance Tracker Map</h2>
+                    
+                    <div class="filter-section">
+                        <div class="filter-grid">
+                            <div>
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-input" id="mapDate" value="<?php echo date('Y-m-d'); ?>">
+                            </div>
+                            <div>
+                                <label class="form-label">Police Station</label>
+                                <select class="form-select" id="mapStation">
+                                    <option value="">All Stations</option>
+                                    <option value="APMC Police Station">APMC Police Station</option>
+                                    <option value="Malamaruti Police Station">Malamaruti Police Station</option>
+                                    <option value="Market Police Station">Market Police Station</option>
+                                    <option value="Shahapur Police Station">Shahapur Police Station</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Shift</label>
+                                <select class="form-select" id="mapShift">
+                                    <option value="">All Shifts</option>
+                                    <option value="A">Shift A</option>
+                                    <option value="B">Shift B</option>
+                                    <option value="C">Shift C</option>
+                                </select>
+                            </div>
+                            <button class="filter-btn" onclick="updateTrackerMap()">
+                                <i class="fas fa-map-marked-alt"></i> Update Map
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-map-container">
+                        <div id="trackerMapContainer"></div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <h3 style="color: var(--police-gold); margin-bottom: 20px;">Tracked Personnel</h3>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Rank</th>
+                                        <th>Station</th>
+                                        <th>Last Location</th>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trackerTableBody">
+                                    <!-- Tracker data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Analytics Tab -->
+                <div id="analytics" class="tab-content">
+                    <h2 class="page-title">Attendance Analytics</h2>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="avgAttendance">0%</div>
+                            <div class="stat-label">Average Attendance</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="topStation">-</div>
+                            <div class="stat-label">Most Active Station</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="peakShift">-</div>
+                            <div class="stat-label">Peak Shift</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="lateCount">0</div>
+                            <div class="stat-label">Late Arrivals</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 style="color: var(--police-gold); margin-bottom: 20px;">Attendance by Police Station</h3>
+                        <canvas id="stationChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 style="color: var(--police-gold); margin-bottom: 20px;">Attendance by Shift</h3>
+                        <canvas id="shiftChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 style="color: var(--police-gold); margin-bottom: 20px;">Attendance by Rank</h3>
+                        <canvas id="rankChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Sync Data Tab -->
+                <div id="syncData" class="tab-content">
+                    <h2 class="page-title">Data Synchronization</h2>
+                    
+                    <div class="form-container">
+                        <h3 style="color: var(--police-gold); margin-bottom: 20px;">Google Sheets Integration</h3>
+                        
+                        <div class="google-sheet-info" style="margin-bottom: 30px;">
+                            <p><i class="fas fa-link"></i> Connected to: 
+                                <a href="https://docs.google.com/spreadsheets/d/1MA0MWmlTuWmDzsOsw7v0owf9hNlfCdfjlFoT4ZzbOJI/edit" 
+                                   target="_blank" class="sheet-link">Police Attendance Sheet</a>
+                            </p>
+                            <p><i class="fas fa-database"></i> Sheet ID: 1MA0MWmlTuWmDzsOsw7v0owf9hNlfCdfjlFoT4ZzbOJI</p>
+                        </div>
+                        
+                        <div style="background: rgba(139, 0, 0, 0.2); padding: 25px; border-radius: 10px; margin-bottom: 30px;">
+                            <h4 style="color: var(--police-gold); margin-bottom: 15px;">Google Apps Script Setup</h4>
+                            <p style="color: #ccc; margin-bottom: 15px;">To enable Google Sheets integration, you need to deploy the following Apps Script:</p>
+                            
+                            <button class="btn" onclick="openScriptSetup()" style="background: var(--police-blue);">
+                                <i class="fas fa-code"></i> View Apps Script Code
+                            </button>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <button class="submit-btn" onclick="syncAllData()">
+                                <i class="fas fa-sync-alt"></i> Sync All Data
+                            </button>
+                            <button class="submit-btn" onclick="clearLocalData()" style="background: var(--police-red);">
+                                <i class="fas fa-trash"></i> Clear Local Cache
+                            </button>
+                        </div>
+                        
+                        <div id="syncStatus" class="status-message" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2 class="modal-title">Attendance Submitted!</h2>
+            <p class="modal-message" id="successMessage">Your attendance has been successfully recorded in Google Sheets.</p>
+            <button class="modal-btn" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+    
+    <!-- Warning Modal -->
+    <div id="warningModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i class="fas fa-exclamation-triangle" style="color: var(--police-gold);"></i>
+            </div>
+            <h2 class="modal-title">Attendance Already Marked</h2>
+            <p class="modal-message" id="warningMessage">You have already marked attendance within the last hour.</p>
+            <button class="modal-btn" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+    
+    <!-- Script Setup Modal -->
+    <div id="scriptModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <h2 style="color: var(--police-gold); margin-bottom: 20px;">Google Apps Script Setup</h2>
+            
+            <div style="background: #2d2d2d; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                <h3 style="color: #90EE90; margin-bottom: 15px;">Step 1: Create Google Apps Script</h3>
+                <p style="color: #ccc; margin-bottom: 10px;">1. Open your Google Sheet</p>
+                <p style="color: #ccc; margin-bottom: 10px;">2. Click <strong>Extensions → Apps Script</strong></p>
+                <p style="color: #ccc; margin-bottom: 10px;">3. Delete any existing code and paste the following:</p>
+                
+                <pre style="background: #1a1a1a; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 12px; max-height: 300px; overflow-y: auto;">
+// Google Apps Script for Police Attendance System
+const SHEET_ID = '1MA0MWmlTuWmDzsOsw7v0owf9hNlfCdfjlFoT4ZzbOJI';
+
+function doPost(e) {
+  return handleRequest(e);
+}
+
+function doGet(e) {
+  return handleRequest(e);
+}
+
+function handleRequest(e) {
+  try {
+    const action = e.parameter.action;
+    const sheet = SpreadsheetApp.openById(SHEET_ID);
+    
+    switch(action) {
+      case 'submitAttendance':
+        return submitAttendance(sheet, e.parameter);
+      case 'addPersonnel':
+        return addPersonnel(sheet, e.parameter);
+      case 'getAttendance':
+        return getAttendance(sheet, e.parameter);
+      case 'getPersonnel':
+        return getPersonnel(sheet);
+      case 'checkDuplicate':
+        return checkDuplicate(sheet, e.parameter);
+      case 'getStats':
+        return getStats(sheet);
+      case 'exportData':
+        return exportData(sheet, e.parameter);
+      default:
+        return createResponse('error', 'Invalid action');
+    }
+  } catch (error) {
+    return createResponse('error', error.toString());
+  }
+}
+
+function submitAttendance(sheet, data) {
+  try {
+    let attendanceSheet = sheet.getSheetByName('Attendance');
+    if (!attendanceSheet) {
+      attendanceSheet = sheet.insertSheet('Attendance');
+      attendanceSheet.getRange(1, 1, 1, 11).setValues([[
+        'Timestamp', 'Police ID', 'Name', 'Rank', 'Police Station', 
+        'Sector', 'Shift', 'Latitude', 'Longitude', 'Address', 'Accuracy'
+      ]]);
+    }
+    
+    // Check for duplicate within last hour
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const dataRange = attendanceSheet.getDataRange().getValues();
+    
+    for (let i = 1; i < dataRange.length; i++) {
+      const row = dataRange[i];
+      const rowTime = new Date(row[0]);
+      if (row[1] === data.policeId && rowTime > oneHourAgo) {
+        return createResponse('error', 'Attendance already marked within last hour');
+      }
+    }
+    
+    const timestamp = new Date();
+    const rowData = [
+      timestamp,
+      data.policeId,
+      data.fullName,
+      data.rank,
+      data.policeStation,
+      data.sector,
+      data.shift,
+      data.latitude,
+      data.longitude,
+      data.address,
+      data.accuracy
+    ];
+    
+    attendanceSheet.appendRow(rowData);
+    
+    // Update Personnel sheet if needed
+    updatePersonnelSheet(sheet, data);
+    
+    return createResponse('success', 'Attendance recorded successfully', {
+      timestamp: timestamp.toISOString(),
+      id: data.policeId
+    });
+  } catch (error) {
+    return createResponse('error', error.toString());
+  }
+}
+
+function addPersonnel(sheet, data) {
+  try {
+    let personnelSheet = sheet.getSheetByName('Personnel');
+    if (!personnelSheet) {
+      personnelSheet = sheet.insertSheet('Personnel');
+      personnelSheet.getRange(1, 1, 1, 8).setValues([[
+        'Police ID', 'Name', 'Rank', 'Police Station', 
+        'Sector', 'Shift', 'Email', 'Contact'
+      ]]);
+    }
+    
+    // Check if ID already exists
+    const dataRange = personnelSheet.getDataRange().getValues();
+    for (let i = 1; i < dataRange.length; i++) {
+      if (dataRange[i][0] === data.policeId) {
+        return createResponse('error', 'Police ID already exists');
+      }
+    }
+    
+    const rowData = [
+      data.policeId,
+      data.fullName,
+      data.rank,
+      data.policeStation,
+      data.sector,
+      data.shift,
+      data.email || '',
+      data.contact || ''
+    ];
+    
+    personnelSheet.appendRow(rowData);
+    
+    return createResponse('success', 'Personnel added successfully');
+  } catch (error) {
+    return createResponse('error', error.toString());
+  }
+}
+
+function updatePersonnelSheet(sheet, data) {
+  try {
+    let personnelSheet = sheet.getSheetByName('Personnel');
+    if (!personnelSheet) return;
+    
+    const dataRange = personnelSheet.getDataRange().getValues();
+    let found = false;
+    
+    for (let i = 1; i < dataRange.length; i++) {
+      if (dataRange[i][0] === data.policeId) {
+        found = true;
+        // Update existing record
+        personnelSheet.getRange(i + 1, 2, 1, 5).setValues([[
+          data.fullName,
+          data.rank,
+          data.policeStation,
+          data.sector,
+          data.shift
+        ]]);
+        break;
+      }
+    }
+    
+    if (!found) {
+      // Add new personnel
+      const rowData = [
+        data.policeId,
+        data.fullName,
+        data.rank,
+        data.policeStation,
+        data.sector,
+        data.shift,
+        '',
+        ''
+      ];
+      personnelSheet.appendRow(rowData);
+    }
+  } catch (error) {
+    console.error('Error updating personnel sheet:', error);
+  }
+}
+
+function getAttendance(sheet, params) {
+  try {
+    const attendanceSheet = sheet.getSheetByName('Attendance');
+    if (!attendanceSheet) {
+      return createResponse('success', { attendance: [] });
+    }
+    
+    let data = attendanceSheet.getDataRange().getValues();
+    const headers = data[0];
+    
+    // Apply filters if provided
+    if (params.dateFrom || params.dateTo || params.station || params.sector || params.shift || params.rank) {
+      data = data.filter((row, index) => {
+        if (index === 0) return false; // Skip header
+        
+        if (params.dateFrom) {
+          const rowDate = new Date(row[0]);
+          const filterDate = new Date(params.dateFrom);
+          if (rowDate < filterDate) return false;
+        }
+        
+        if (params.dateTo) {
+          const rowDate = new Date(row[0]);
+          const filterDate = new Date(params.dateTo);
+          filterDate.setHours(23, 59, 59, 999);
+          if (rowDate > filterDate) return false;
+        }
+        
+        if (params.station && row[4] !== params.station) return false;
+        if (params.sector && row[5] !== params.sector) return false;
+        if (params.shift && row[6] !== params.shift) return false;
+        if (params.rank && row[3] !== params.rank) return false;
+        
+        return true;
+      });
+    } else {
+      data = data.slice(1); // Remove header
+    }
+    
+    // Format data
+    const attendance = data.map(row => {
+      const record = {};
+      headers.forEach((header, index) => {
+        record[header] = row[index];
+      });
+      return record;
+    });
+    
+    // Get last 100 records if no filters
+    const result = attendance.slice(-100).reverse();
+    
+    return createResponse('success', { attendance: result });
+  } catch (error) {
+    return createResponse('error', error.toString());
+  }
+}
+
+function getPersonnel(sheet) {
+  try {
+    const personnelSheet = sheet.getSheetByName('Personnel');
+    if (!personnelSheet) {
+      return createResponse('success', { personnel: [] });
+    }
+    
+    const data = personnelSheet.getDataRange().getValues();
+    const personnel = data.slice(1).map(row => ({
+      id: row[0],
+      name: row[1],
+      rank: row[2],
+      station: row[3],
+      sector: row[4],
+      shift: row[5],
+      email: row[6],
+      contact: row[7]
+    }));
+    
+    return createResponse('success', { personnel: personnel });
+  } catch (error) {
+    return createResponse('error', error.toString());
+  }
+}
+
+function checkDuplicate(sheet, data) {
+  try {
+    const attendanceSheet = sheet.getSheetByName('Attendance');
+    if (!attendanceSheet) {
+      return createResponse('success', { isDuplicate: false });
+    }
+    
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const dataRange = attendanceSheet.getDataRange().getValues();
+    
+    for (let i = 1; i < dataRange.length; i++) {
+      const row = dataRange[i];
+      const rowTime = new Date(row[0]);
+      if (row[1] === data.policeId && rowTime > oneHourAgo) {
+        return createResponse('success', { 
+          isDuplicate: true,
+          lastTime: rowTime.toISOString()
+        });
+      }
+    }
+    
+    return createResponse('success', { isDuplicate: false });
+  } catch (error) {
+    return createResponse('error', error.toString());
+  }
+}
+
+function getStats(sheet) {
+  try {
+    const attendanceSheet = sheet.getSheetByName('Attendance');
+    const personnelSheet = sheet.getSheetByName('Personnel');
+    
+    let totalAttendance = 0;
+    let totalPersonnel = 0;
+    let presentToday = 0;
+    let activeStations = new Set();
+    const today = new Date().toDateString();
+    
+    if (attendanceSheet) {
+      const attendanceData = attendanceSheet.getDataRange().getValues();
+      totalAttendance = attendanceData.length - 1;
+      
+      for (let i = 1; i < attendanceData.length; i++) {
+        const rowDate = new Date(attendanceData[i][0]).toDateString();
+        if (rowDate === today) {
+          presentToday++;
+        }
+        activeStations.add(attendanceData[i][4]);
+      }
+    }
+    
+    if (personnelSheet) {
+      const personnelData = personnelSheet.getDataRange().getValues();
+      totalPersonnel = personnelData.length - 1;
+    }
+    
+    return createResponse('success', {
+      totalAttendance: totalAttendance,
+      totalPersonnel: totalPersonnel,
+      presentToday: presentToday,
+      activeStations: activeStations.size
+    });
+  } catch (error) {
+    return createResponse('error', error.toString());
+  }
+}
+
+function exportData(sheet, params) {
+  try {
+    const attendanceSheet = sheet.getSheetByName('Attendance');
+    if (!attendanceSheet) {
+      return createResponse('error', 'No attendance data found');
+    }
+    
+    let data = attendanceSheet.getDataRange().getValues();
+    const headers = data[0];
+    
+    // Apply filters
+    if (params.dateFrom || params.dateTo || params.station || params.sector || params.shift || params.rank) {
+      data = data.filter((row, index) => {
+        if (index === 0) return true; // Keep header
+        
+        if (params.dateFrom) {
+          const rowDate = new Date(row[0]);
+          const filterDate = new Date(params.dateFrom);
+          if (rowDate < filterDate) return false;
+        }
+        
+        if (params.dateTo) {
+          const rowDate = new Date(row[0]);
+          const filterDate = new Date(params.dateTo);
+          filterDate.setHours(23, 59, 59, 999);
+          if (rowDate > filterDate) return false;
+        }
+        
+        if (params.station && row[4] !== params.station) return false;
+        if (params.sector && row[5] !== params.sector) return false;
+        if (params.shift && row[6] !== params.shift) return false;
+        if (params.rank && row[3] !== params.rank) return false;
+        
+        return true;
+      });
+    }
+    
+    // Convert to CSV
+    const csv = data.map(row => 
+      row.map(cell => {
+        if (cell instanceof Date) {
+          return cell.toLocaleString();
+        }
+        return `"${String(cell).replace(/"/g, '""')}"`;
+      }).join(',')
+    ).join('\n');
+    
+    return createResponse('success', { csv: csv });
+  } catch (error) {
+    return createResponse('error', error.toString());
+  }
+}
+
+function createResponse(status, message, data = null) {
+  const response = {
+    status: status,
+    message: message
+  };
+  
+  if (data) {
+    response.data = data;
+  }
+  
+  return ContentService
+    .createTextOutput(JSON.stringify(response))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+                </pre>
+            </div>
+            
+            <div style="background: #2d2d2d; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                <h3 style="color: #90EE90; margin-bottom: 15px;">Step 2: Deploy as Web App</h3>
+                <p style="color: #ccc; margin-bottom: 10px;">1. Click <strong>Deploy → New deployment</strong></p>
+                <p style="color: #ccc; margin-bottom: 10px;">2. Select type: <strong>Web app</strong></p>
+                <p style="color: #ccc; margin-bottom: 10px;">3. Set "Execute as" to: <strong>Me</strong></p>
+                <p style="color: #ccc; margin-bottom: 10px;">4. Set "Who has access" to: <strong>Anyone</strong></p>
+                <p style="color: #ccc; margin-bottom: 10px;">5. Click <strong>Deploy</strong></p>
+                <p style="color: #ccc; margin-bottom: 10px;">6. Copy the Web App URL and paste it below:</p>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/..." 
+                           style="flex: 1; padding: 12px; border: 2px solid var(--police-red); border-radius: 6px; background: rgba(255,255,255,0.1); color: white;">
+                    <button onclick="saveScriptUrl()" class="login-btn" style="width: auto; padding: 12px 25px;">Save URL</button>
+                </div>
+            </div>
+            
+            <button class="modal-btn" onclick="closeScriptModal()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Configuration
+        const GOOGLE_SHEET_ID = '1MA0MWmlTuWmDzsOsw7v0owf9hNlfCdfjlFoT4ZzbOJI';
+        let SCRIPT_URL = localStorage.getItem('police_script_url') || '';
+        
+        // Global variables
+        let currentUser = null;
+        let currentRole = 'user';
+        let userLocation = null;
+        let userMap = null;
+        let adminMap = null;
+        let trackerMap = null;
+        let attendanceChart = null;
+        let stationChart = null;
+        let shiftChart = null;
+        let rankChart = null;
+        
+        // Admin credentials
+        const ADMIN_USERNAME = 'Belagavi';
+        const ADMIN_PASSWORD = 'A@abc7676';
+        
+        // Police station coordinates for maps
+        const stationCoordinates = {
+            'APMC Police Station': [15.8497, 74.4977],
+            'Malamaruti Police Station': [15.8622, 74.5083],
+            'Market Police Station': [15.8564, 74.5047],
+            'Shahapur Police Station': [15.8639, 74.5258],
+            'Kadebazar Police Station': [15.8583, 74.5125],
+            'Camp Police Station': [15.8514, 74.5189],
+            'Tilakawadi Police Station': [15.8719, 74.5189],
+            'Udyambag Police Station': [15.8472, 74.5333],
+            'Rural Police Station': [15.8417, 74.5417],
+            'Kakati Police Station': [15.8750, 74.5083],
+            'Marihal Police Station': [15.8667, 74.4958],
+            'Bagewadi Police Station': [15.8375, 74.5625],
+            'Traffic North Police Station': [15.8625, 74.5319],
+            'Traffic South Police Station': [15.8475, 74.4958]
+        };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update date time
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            // Check for existing login
+            const savedRole = localStorage.getItem('currentRole');
+            if (savedRole) {
+                currentRole = savedRole;
+                if (savedRole === 'user') {
+                    document.getElementById('userDashboard').style.display = 'block';
+                    document.getElementById('loginPage').style.display = 'none';
+                } else if (savedRole === 'admin') {
+                    document.getElementById('adminDashboard').style.display = 'block';
+                    document.getElementById('loginPage').style.display = 'none';
+                    loadAdminData();
+                }
+            }
+            
+            // Check for script URL
+            if (!SCRIPT_URL) {
+                setTimeout(() => {
+                    openScriptSetup();
+                }, 1000);
+            }
+        });
+        
+        // Update date and time
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-IN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const timeStr = now.toLocaleTimeString('en-IN');
+            document.getElementById('currentDateTime').textContent = `${dateStr} | ${timeStr}`;
+        }
+        
+        // Select role on login page
+        function selectRole(role) {
+            currentRole = role;
+            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (role === 'user') {
+                document.getElementById('userLogin').style.display = 'block';
+                document.getElementById('adminLogin').style.display = 'none';
+            } else {
+                document.getElementById('userLogin').style.display = 'none';
+                document.getElementById('adminLogin').style.display = 'block';
+            }
+        }
+        
+        // User login (ID entry)
+        async function loginUser() {
+            const userId = document.getElementById('userID').value.trim();
+            if (!userId) {
+                alert('Please enter your Police ID');
+                return;
+            }
+            
+            // Check if script URL is configured
+            if (!SCRIPT_URL) {
+                openScriptSetup();
+                return;
+            }
+            
+            // Check for duplicate attendance in last hour
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=checkDuplicate&policeId=${encodeURIComponent(userId)}`);
+                const result = await response.json();
+                
+                if (result.status === 'success' && result.data.isDuplicate) {
+                    const lastTime = new Date(result.data.lastTime).toLocaleTimeString();
+                    document.getElementById('warningMessage').textContent = 
+                        `ID ${userId} already marked attendance at ${lastTime}. Please wait 1 hour.`;
+                    document.getElementById('warningModal').style.display = 'flex';
+                    return;
+                }
+            } catch (error) {
+                console.error('Error checking duplicate:', error);
+            }
+            
+            currentUser = userId;
+            localStorage.setItem('currentRole', 'user');
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('userDashboard').style.display = 'block';
+            
+            // Try to auto-fill from Google Sheets
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getPersonnel`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const personnel = result.data.personnel.find(p => p.id === userId);
+                    if (personnel) {
+                        document.getElementById('policeId').value = personnel.id;
+                        document.getElementById('rank').value = personnel.rank;
+                        document.getElementById('fullName').value = personnel.name;
+                        document.getElementById('policeStation').value = personnel.station;
+                        document.getElementById('sector').value = personnel.sector;
+                        document.getElementById('shift').value = personnel.shift;
+                    } else {
+                        document.getElementById('policeId').value = userId;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading personnel data:', error);
+                document.getElementById('policeId').value = userId;
+            }
+        }
+        
+        // Admin login
+        function loginAdmin() {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                currentRole = 'admin';
+                localStorage.setItem('currentRole', 'admin');
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+                loadAdminData();
+            } else {
+                alert('Invalid username or password!');
+            }
+        }
+        
+        // Logout
+        function logout() {
+            currentUser = null;
+            currentRole = 'user';
+            localStorage.removeItem('currentRole');
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('userDashboard').style.display = 'none';
+            document.getElementById('adminDashboard').style.display = 'none';
+            
+            // Reset forms
+            document.getElementById('userID').value = '';
+            document.getElementById('adminUsername').value = '';
+            document.getElementById('adminPassword').value = '';
+        }
+        
+        // Capture location with beep sound
+        function captureLocation() {
+            const btn = document.getElementById('captureLocationBtn');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<span class="loading"></span> Capturing location...';
+            btn.disabled = true;
+            
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    // Success - play beep sound
+                    playBeepSound();
+                    
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    };
+                    
+                    // Update form fields
+                    document.getElementById('latitude').value = userLocation.lat.toFixed(6);
+                    document.getElementById('longitude').value = userLocation.lng.toFixed(6);
+                    document.getElementById('accuracy').value = `${Math.round(userLocation.accuracy)} meters`;
+                    
+                    // Get address
+                    const address = await getAddressFromCoords(userLocation.lat, userLocation.lng);
+                    document.getElementById('address').value = address;
+                    
+                    // Show location info
+                    document.getElementById('locationInfo').style.display = 'grid';
+                    
+                    // Show map
+                    showUserMap(userLocation.lat, userLocation.lng);
+                    
+                    // Enable submit button
+                    document.getElementById('submitAttendanceBtn').disabled = false;
+                    
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> Location Captured';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                },
+                (error) => {
+                    alert('Error getting location: ' + error.message);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+        
+        // Play beep sound
+        function playBeepSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+        
+        // Get address from coordinates
+        async function getAddressFromCoords(lat, lng) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                const data = await response.json();
+                return data.display_name || 'Address not found';
+            } catch (error) {
+                return 'Address lookup failed';
+            }
+        }
+        
+        // Show user map
+        function showUserMap(lat, lng) {
+            const mapContainer = document.getElementById('mapContainer');
+            mapContainer.style.display = 'block';
+            
+            if (!userMap) {
+                userMap = L.map('map').setView([lat, lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(userMap);
+            } else {
+                userMap.setView([lat, lng], 16);
+            }
+            
+            // Clear existing markers
+            userMap.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    userMap.removeLayer(layer);
+                }
+            });
+            
+            // Add marker
+            L.marker([lat, lng]).addTo(userMap)
+                .bindPopup('Your Current Location')
+                .openPopup();
+        }
+        
+        // Submit attendance to Google Sheets
+        async function submitAttendance() {
+            if (!SCRIPT_URL) {
+                alert('Google Sheets integration not configured. Please contact admin.');
+                return;
+            }
+            
+            // Get form values
+            const policeId = document.getElementById('policeId').value.trim();
+            const rank = document.getElementById('rank').value;
+            const fullName = document.getElementById('fullName').value.trim();
+            const policeStation = document.getElementById('policeStation').value;
+            const sector = document.getElementById('sector').value;
+            const shift = document.getElementById('shift').value;
+            
+            // Validation
+            if (!policeId || !rank || !fullName || !policeStation || !sector || !shift) {
+                showStatus('error', 'Please fill all required fields', 'attendanceStatus');
+                return;
+            }
+            
+            if (!userLocation) {
+                showStatus('error', 'Please capture your location first', 'attendanceStatus');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitAttendanceBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<span class="loading"></span> Saving to Google Sheets...';
+            submitBtn.disabled = true;
+            
+            try {
+                // Prepare data for Google Sheets
+                const formData = new URLSearchParams();
+                formData.append('action', 'submitAttendance');
+                formData.append('policeId', policeId);
+                formData.append('fullName', fullName);
+                formData.append('rank', rank);
+                formData.append('policeStation', policeStation);
+                formData.append('sector', sector);
+                formData.append('shift', shift);
+                formData.append('latitude', userLocation.lat);
+                formData.append('longitude', userLocation.lng);
+                formData.append('address', document.getElementById('address').value);
+                formData.append('accuracy', Math.round(userLocation.accuracy));
+                
+                // Submit to Google Apps Script
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'no-cors'
+                });
+                
+                // Show success modal
+                document.getElementById('successMessage').textContent = 
+                    `Attendance marked for ${fullName} (${policeId}) at ${policeStation}. Data saved to Google Sheets.`;
+                document.getElementById('successModal').style.display = 'flex';
+                
+                // Reset form
+                setTimeout(() => {
+                    document.getElementById('policeId').value = '';
+                    document.getElementById('rank').value = '';
+                    document.getElementById('fullName').value = '';
+                    document.getElementById('policeStation').value = '';
+                    document.getElementById('sector').value = '';
+                    document.getElementById('shift').value = '';
+                    document.getElementById('latitude').value = '';
+                    document.getElementById('longitude').value = '';
+                    document.getElementById('accuracy').value = '';
+                    document.getElementById('address').value = '';
+                    document.getElementById('locationInfo').style.display = 'none';
+                    document.getElementById('mapContainer').style.display = 'none';
+                    document.getElementById('submitAttendanceBtn').disabled = true;
+                    if (userMap) {
+                        userMap.remove();
+                        userMap = null;
+                    }
+                    
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }, 1000);
+                
+            } catch (error) {
+                showStatus('error', 'Error saving to Google Sheets: ' + error.message, 'attendanceStatus');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('successModal').style.display = 'none';
+            document.getElementById('warningModal').style.display = 'none';
+        }
+        
+        // Show status message
+        function showStatus(type, message, elementId) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status-message ${type}`;
+            element.style.display = 'block';
+            
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Admin functions
+        function showTab(tabName) {
+            // Update sidebar active state
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show selected tab
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+            
+            // Load data for specific tabs
+            if (tabName === 'dashboard') {
+                loadDashboardData();
+            } else if (tabName === 'attendanceData') {
+                loadAttendanceTable();
+            } else if (tabName === 'trackerMap') {
+                initTrackerMap();
+            } else if (tabName === 'analytics') {
+                loadAnalytics();
+            }
+        }
+        
+        // Load admin data
+        async function loadAdminData() {
+            if (!SCRIPT_URL) {
+                showStatus('error', 'Google Sheets integration not configured', 'syncStatus');
+                return;
+            }
+            
+            try {
+                // Load statistics
+                const statsResponse = await fetch(`${SCRIPT_URL}?action=getStats`);
+                const statsResult = await statsResponse.json();
+                
+                if (statsResult.status === 'success') {
+                    document.getElementById('totalAttendance').textContent = statsResult.data.totalAttendance;
+                    document.getElementById('totalPersonnel').textContent = statsResult.data.totalPersonnel;
+                    document.getElementById('presentToday').textContent = statsResult.data.presentToday;
+                    document.getElementById('activeStations').textContent = statsResult.data.activeStations;
+                }
+                
+                // Initialize maps if not already
+                if (!adminMap) {
+                    initAdminMap();
+                }
+                
+                // Load charts
+                loadDashboardCharts();
+                
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+                showStatus('error', 'Error loading data from Google Sheets', 'syncStatus');
+            }
+        }
+        
+        // Initialize admin map
+        function initAdminMap() {
+            adminMap = L.map('adminMap').setView([15.8564, 74.5047], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(adminMap);
+            
+            // Add police station markers
+            Object.entries(stationCoordinates).forEach(([station, coords]) => {
+                L.marker(coords).addTo(adminMap)
+                    .bindPopup(`<b>${station}</b>`)
+                    .openPopup();
+            });
+        }
+        
+        // Load dashboard charts
+        async function loadDashboardCharts() {
+            if (!SCRIPT_URL) return;
+            
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getAttendance`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const attendanceData = result.data.attendance;
+                    
+                    // Prepare data for last 7 days
+                    const last7Days = [];
+                    const dayCounts = {};
+                    
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        const dateStr = date.toDateString();
+                        last7Days.push(dateStr);
+                        dayCounts[dateStr] = 0;
+                    }
+                    
+                    attendanceData.forEach(record => {
+                        const recordDate = new Date(record.Timestamp).toDateString();
+                        if (dayCounts[recordDate] !== undefined) {
+                            dayCounts[recordDate]++;
+                        }
+                    });
+                    
+                    const ctx = document.getElementById('attendanceChart').getContext('2d');
+                    
+                    if (attendanceChart) {
+                        attendanceChart.destroy();
+                    }
+                    
+                    attendanceChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: last7Days.map(day => day.split(' ')[0]),
+                            datasets: [{
+                                label: 'Daily Attendance',
+                                data: last7Days.map(day => dayCounts[day] || 0),
+                                borderColor: '#FFD700',
+                                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(255,255,255,0.1)'
+                                    },
+                                    ticks: {
+                                        color: '#ccc'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        color: 'rgba(255,255,255,0.1)'
+                                    },
+                                    ticks: {
+                                        color: '#ccc'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: '#ccc'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading charts:', error);
+            }
+        }
+        
+        // Load attendance table
+        async function loadAttendanceTable() {
+            if (!SCRIPT_URL) return;
+            
+            const tbody = document.getElementById('attendanceTableBody');
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px;"><span class="loading"></span> Loading data...</td></tr>';
+            
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getAttendance`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    tbody.innerHTML = '';
+                    
+                    if (result.data.attendance.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px;">No attendance records found</td></tr>';
+                        return;
+                    }
+                    
+                    result.data.attendance.forEach(record => {
+                        const row = document.createElement('tr');
+                        const date = new Date(record.Timestamp);
+                        
+                        row.innerHTML = `
+                            <td>${date.toLocaleString('en-IN')}</td>
+                            <td>${record['Police ID'] || 'N/A'}</td>
+                            <td>${record.Name || 'N/A'}</td>
+                            <td>${record.Rank || 'N/A'}</td>
+                            <td>${record['Police Station'] || 'N/A'}</td>
+                            <td>${record.Sector || 'N/A'}</td>
+                            <td>${record.Shift || 'N/A'}</td>
+                            <td>${record.Address ? record.Address.substring(0, 30) + '...' : 'N/A'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading attendance table:', error);
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #ff6b6b;">Error loading data</td></tr>';
+            }
+        }
+        
+        // Filter records
+        async function filterRecords() {
+            if (!SCRIPT_URL) return;
+            
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            const station = document.getElementById('filterStation').value;
+            const sector = document.getElementById('filterSector').value;
+            const shift = document.getElementById('filterShift').value;
+            const rank = document.getElementById('filterRank').value;
+            
+            const tbody = document.getElementById('attendanceTableBody');
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px;"><span class="loading"></span> Filtering data...</td></tr>';
+            
+            try {
+                let url = `${SCRIPT_URL}?action=getAttendance`;
+                if (dateFrom) url += `&dateFrom=${dateFrom}`;
+                if (dateTo) url += `&dateTo=${dateTo}`;
+                if (station) url += `&station=${encodeURIComponent(station)}`;
+                if (sector) url += `&sector=${sector}`;
+                if (shift) url += `&shift=${shift}`;
+                if (rank) url += `&rank=${rank}`;
+                
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    tbody.innerHTML = '';
+                    
+                    if (result.data.attendance.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px;">No matching records found</td></tr>';
+                        return;
+                    }
+                    
+                    result.data.attendance.forEach(record => {
+                        const row = document.createElement('tr');
+                        const date = new Date(record.Timestamp);
+                        
+                        row.innerHTML = `
+                            <td>${date.toLocaleString('en-IN')}</td>
+                            <td>${record['Police ID'] || 'N/A'}</td>
+                            <td>${record.Name || 'N/A'}</td>
+                            <td>${record.Rank || 'N/A'}</td>
+                            <td>${record['Police Station'] || 'N/A'}</td>
+                            <td>${record.Sector || 'N/A'}</td>
+                            <td>${record.Shift || 'N/A'}</td>
+                            <td>${record.Address ? record.Address.substring(0, 30) + '...' : 'N/A'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Error filtering records:', error);
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #ff6b6b;">Error filtering data</td></tr>';
+            }
+        }
+        
+        // Export to Google Sheets
+        async function exportToGoogleSheets() {
+            if (!SCRIPT_URL) return;
+            
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            const station = document.getElementById('filterStation').value;
+            const sector = document.getElementById('filterSector').value;
+            const shift = document.getElementById('filterShift').value;
+            const rank = document.getElementById('filterRank').value;
+            
+            try {
+                let url = `${SCRIPT_URL}?action=exportData`;
+                if (dateFrom) url += `&dateFrom=${dateFrom}`;
+                if (dateTo) url += `&dateTo=${dateTo}`;
+                if (station) url += `&station=${encodeURIComponent(station)}`;
+                if (sector) url += `&sector=${sector}`;
+                if (shift) url += `&shift=${shift}`;
+                if (rank) url += `&rank=${rank}`;
+                
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Download CSV
+                    const blob = new Blob([result.data.csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `police_attendance_${new Date().toISOString().slice(0,10)}.csv`);
+                    link.style.visibility = 'hidden';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showStatus('success', 'Data exported successfully', 'syncStatus');
+                } else {
+                    showStatus('error', result.message, 'syncStatus');
+                }
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showStatus('error', 'Error exporting data', 'syncStatus');
+            }
+        }
+        
+        // Add new personnel
+        async function addNewPersonnel() {
+            if (!SCRIPT_URL) {
+                showStatus('error', 'Google Sheets integration not configured', 'personnelStatus');
+                return;
+            }
+            
+            const id = document.getElementById('newPoliceId').value.trim();
+            const rank = document.getElementById('newRank').value;
+            const name = document.getElementById('newFullName').value.trim();
+            const station = document.getElementById('newPoliceStation').value;
+            const sector = document.getElementById('newSector').value;
+            const shift = document.getElementById('newShift').value;
+            const email = document.getElementById('newEmail').value.trim();
+            const contact = document.getElementById('newContact').value.trim();
+            
+            // Validation
+            if (!id || !rank || !name || !station || !sector || !shift) {
+                showStatus('error', 'Please fill all required fields', 'personnelStatus');
+                return;
+            }
+            
+            const addBtn = document.querySelector('#addPersonnel .submit-btn');
+            const originalText = addBtn.innerHTML;
+            
+            addBtn.innerHTML = '<span class="loading"></span> Adding to Google Sheets...';
+            addBtn.disabled = true;
+            
+            try {
+                // Prepare data for Google Sheets
+                const formData = new URLSearchParams();
+                formData.append('action', 'addPersonnel');
+                formData.append('policeId', id);
+                formData.append('fullName', name);
+                formData.append('rank', rank);
+                formData.append('policeStation', station);
+                formData.append('sector', sector);
+                formData.append('shift', shift);
+                formData.append('email', email);
+                formData.append('contact', contact);
+                
+                // Submit to Google Apps Script
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'no-cors'
+                });
+                
+                showStatus('success', 'Personnel added to Google Sheets successfully', 'personnelStatus');
+                
+                // Reset form
+                document.getElementById('newPoliceId').value = '';
+                document.getElementById('newRank').value = '';
+                document.getElementById('newFullName').value = '';
+                document.getElementById('newPoliceStation').value = '';
+                document.getElementById('newSector').value = '';
+                document.getElementById('newShift').value = '';
+                document.getElementById('newEmail').value = '';
+                document.getElementById('newContact').value = '';
+                
+            } catch (error) {
+                showStatus('error', 'Error adding personnel: ' + error.message, 'personnelStatus');
+            } finally {
+                addBtn.innerHTML = originalText;
+                addBtn.disabled = false;
+            }
+        }
+        
+        // Initialize tracker map
+        function initTrackerMap() {
+            if (!trackerMap) {
+                trackerMap = L.map('trackerMapContainer').setView([15.8564, 74.5047], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(trackerMap);
+            }
+            
+            updateTrackerMap();
+        }
+        
+        // Update tracker map
+        async function updateTrackerMap() {
+            if (!trackerMap || !SCRIPT_URL) return;
+            
+            // Clear existing markers
+            trackerMap.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    trackerMap.removeLayer(layer);
+                }
+            });
+            
+            const mapDate = document.getElementById('mapDate').value;
+            const station = document.getElementById('mapStation').value;
+            const shift = document.getElementById('mapShift').value;
+            
+            try {
+                let url = `${SCRIPT_URL}?action=getAttendance`;
+                if (mapDate) url += `&dateFrom=${mapDate}&dateTo=${mapDate}`;
+                if (station) url += `&station=${encodeURIComponent(station)}`;
+                if (shift) url += `&shift=${shift}`;
+                
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const tbody = document.getElementById('trackerTableBody');
+                    tbody.innerHTML = '';
+                    
+                    result.data.attendance.forEach(record => {
+                        if (record.Latitude && record.Longitude) {
+                            // Add marker
+                            const marker = L.marker([record.Latitude, record.Longitude]).addTo(trackerMap);
+                            marker.bindPopup(`
+                                <b>${record.Name}</b><br>
+                                ${record.Rank}<br>
+                                ${record['Police Station']}<br>
+                                ${new Date(record.Timestamp).toLocaleTimeString()}
+                            `);
+                            
+                            // Add to table
+                            const row = document.createElement('tr');
+                            const date = new Date(record.Timestamp);
+                            
+                            row.innerHTML = `
+                                <td>${record.Name}</td>
+                                <td>${record.Rank}</td>
+                                <td>${record['Police Station']}</td>
+                                <td>${record.Address ? record.Address.substring(0, 30) + '...' : 'N/A'}</td>
+                                <td>${date.toLocaleTimeString()}</td>
+                                <td><span style="color: #90EE90;">●</span> Present</td>
+                            `;
+                            tbody.appendChild(row);
+                        }
+                    });
+                    
+                    // Fit bounds to show all markers
+                    const markers = result.data.attendance
+                        .filter(r => r.Latitude && r.Longitude)
+                        .map(r => [r.Latitude, r.Longitude]);
+                    
+                    if (markers.length > 0) {
+                        const bounds = L.latLngBounds(markers);
+                        trackerMap.fitBounds(bounds, { padding: [50, 50] });
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating tracker map:', error);
+            }
+        }
+        
+        // Load analytics
+        async function loadAnalytics() {
+            if (!SCRIPT_URL) return;
+            
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getAttendance`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const attendanceData = result.data.attendance;
+                    
+                    // Calculate statistics
+                    const totalDays = 30;
+                    const totalPersonnel = await getPersonnelCount();
+                    const totalPossible = totalPersonnel * totalDays;
+                    const actualAttendance = attendanceData.length;
+                    
+                    const avgAttendance = totalPossible > 0 ? Math.round((actualAttendance / totalPossible) * 100) : 0;
+                    document.getElementById('avgAttendance').textContent = avgAttendance + '%';
+                    
+                    // Most active station
+                    const stationCounts = {};
+                    attendanceData.forEach(record => {
+                        const station = record['Police Station'];
+                        if (station) {
+                            stationCounts[station] = (stationCounts[station] || 0) + 1;
+                        }
+                    });
+                    
+                    let topStation = '-';
+                    let maxCount = 0;
+                    Object.entries(stationCounts).forEach(([station, count]) => {
+                        if (count > maxCount) {
+                            maxCount = count;
+                            topStation = station;
+                        }
+                    });
+                    document.getElementById('topStation').textContent = topStation.split(' ')[0];
+                    
+                    // Peak shift
+                    const shiftCounts = {};
+                    attendanceData.forEach(record => {
+                        const shift = record.Shift;
+                        if (shift) {
+                            shiftCounts[shift] = (shiftCounts[shift] || 0) + 1;
+                        }
+                    });
+                    
+                    let peakShift = '-';
+                    let peakCount = 0;
+                    Object.entries(shiftCounts).forEach(([shift, count]) => {
+                        if (count > peakCount) {
+                            peakCount = count;
+                            peakShift = shift;
+                        }
+                    });
+                    document.getElementById('peakShift').textContent = peakShift;
+                    
+                    // Late arrivals (assuming shift A starts at 6:00)
+                    const lateCount = attendanceData.filter(record => {
+                        if (record.Shift === 'A') {
+                            const hour = new Date(record.Timestamp).getHours();
+                            return hour >= 7; // Late if after 7:00 AM for shift A
+                        }
+                        return false;
+                    }).length;
+                    document.getElementById('lateCount').textContent = lateCount;
+                    
+                    // Load charts
+                    loadAnalyticsCharts(attendanceData);
+                }
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+        
+        // Get personnel count
+        async function getPersonnelCount() {
+            if (!SCRIPT_URL) return 0;
+            
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getPersonnel`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    return result.data.personnel.length;
+                }
+            } catch (error) {
+                console.error('Error getting personnel count:', error);
+            }
+            
+            return 0;
+        }
+        
+        // Load analytics charts
+        function loadAnalyticsCharts(attendanceData) {
+            // Station chart
+            const stationCounts = {};
+            attendanceData.forEach(record => {
+                const station = record['Police Station'];
+                if (station) {
+                    stationCounts[station] = (stationCounts[station] || 0) + 1;
+                }
+            });
+            
+            const stationCtx = document.getElementById('stationChart').getContext('2d');
+            if (stationChart) stationChart.destroy();
+            
+            stationChart = new Chart(stationCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(stationCounts),
+                    datasets: [{
+                        label: 'Attendance Count',
+                        data: Object.values(stationCounts),
+                        backgroundColor: '#8B0000',
+                        borderColor: '#FFD700',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            },
+                            ticks: {
+                                color: '#ccc'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            },
+                            ticks: {
+                                color: '#ccc',
+                                maxRotation: 45
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ccc'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Shift chart
+            const shiftCounts = {};
+            attendanceData.forEach(record => {
+                const shift = record.Shift;
+                if (shift) {
+                    shiftCounts[shift] = (shiftCounts[shift] || 0) + 1;
+                }
+            });
+            
+            const shiftCtx = document.getElementById('shiftChart').getContext('2d');
+            if (shiftChart) shiftChart.destroy();
+            
+            shiftChart = new Chart(shiftCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(shiftCounts),
+                    datasets: [{
+                        data: Object.values(shiftCounts),
+                        backgroundColor: ['#8B0000', '#B22222', '#660000', '#2C2C2C'],
+                        borderColor: '#FFD700',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#ccc'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Rank chart
+            const rankCounts = {};
+            attendanceData.forEach(record => {
+                const rank = record.Rank;
+                if (rank) {
+                    rankCounts[rank] = (rankCounts[rank] || 0) + 1;
+                }
+            });
+            
+            const rankCtx = document.getElementById('rankChart').getContext('2d');
+            if (rankChart) rankChart.destroy();
+            
+            rankChart = new Chart(rankCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(rankCounts),
+                    datasets: [{
+                        data: Object.values(rankCounts),
+                        backgroundColor: ['#8B0000', '#B22222', '#660000', '#2C2C2C', '#00008B', '#006400'],
+                        borderColor: '#FFD700',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#ccc'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Open script setup modal
+        function openScriptSetup() {
+            document.getElementById('scriptModal').style.display = 'flex';
+        }
+        
+        // Close script setup modal
+        function closeScriptModal() {
+            document.getElementById('scriptModal').style.display = 'none';
+        }
+        
+        // Save script URL
+        function saveScriptUrl() {
+            const url = document.getElementById('scriptUrl').value.trim();
+            if (url && url.includes('script.google.com')) {
+                SCRIPT_URL = url;
+                localStorage.setItem('police_script_url', url);
+                alert('Google Apps Script URL saved successfully!');
+                closeScriptModal();
+            } else {
+                alert('Please enter a valid Google Apps Script Web App URL');
+            }
+        }
+        
+        // Refresh data
+        function refreshData() {
+            if (currentRole === 'admin') {
+                loadAdminData();
+                loadAttendanceTable();
+                showStatus('success', 'Data refreshed from Google Sheets', 'syncStatus');
+            }
+        }
+        
+        // Sync all data
+        async function syncAllData() {
+            if (!SCRIPT_URL) {
+                showStatus('error', 'Google Sheets integration not configured', 'syncStatus');
+                return;
+            }
+            
+            try {
+                showStatus('info', 'Syncing data with Google Sheets...', 'syncStatus');
+                
+                // Refresh all data
+                await loadAdminData();
+                await loadAttendanceTable();
+                
+                showStatus('success', 'All data synchronized successfully', 'syncStatus');
+            } catch (error) {
+                showStatus('error', 'Error syncing data: ' + error.message, 'syncStatus');
+            }
+        }
+        
+        // Clear local data
+        function clearLocalData() {
+            if (confirm('Are you sure you want to clear all local cache? This will not affect Google Sheets data.')) {
+                localStorage.removeItem('police_script_url');
+                localStorage.removeItem('currentRole');
+                SCRIPT_URL = '';
+                alert('Local cache cleared. Page will reload.');
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
